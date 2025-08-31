@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Weather Updater</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #00b894 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
+
+        body.night {
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #00cec9 100%);
+        }
+
+        body.rainy {
+            background: linear-gradient(135deg, #636e72 0%, #2d3436 50%, #74b9ff 100%);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            transform: scale(1.02);
+        }
+
+        .search-btn, .location-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .search-btn:hover, .location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .weather-display {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .weather-display.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .current-weather {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .temp-section {
+            text-align: center;
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #0984e3;
+            margin-bottom: 10px;
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .condition {
+            font-size: 1.3rem;
+            color: #2d3436;
+            font-weight: 600;
+        }
+
+        .details-section h3 {
+            color: #0984e3;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: rgba(116, 185, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2d3436;
+        }
+
+        .ai-insights {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .ai-insights h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .insight-text {
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .forecast {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .forecast-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .forecast-day {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .forecast-icon {
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+
+        .forecast-temp {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            color: #0984e3;
+            font-size: 1.2rem;
+            padding: 40px;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .current-weather {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .search-section {
+                flex-direction: column;
+            }
+            
+            .temperature {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ AI Weather Updater</h1>
+            <p class="subtitle">Intelligent weather insights powered by AI</p>
+        </div>
+
+        <div class="search-section">
+            <input type="text" class="search-input" id="cityInput" placeholder="Enter city name (e.g., London, New York)" />
+            <button class="search-btn" onclick="searchWeather()">Get Weather</button>
+            <button class="location-btn" onclick="useCurrentLocation()">📍 My Location</button>
+        </div>
+
+        <div class="weather-display" id="weatherDisplay">
+            <div class="loading">🤖 AI is analyzing atmospheric conditions...</div>
+        </div>
+    </div>
+
+    <script>
+        const weatherData = {
+            'london': {
+                city: 'London, UK',
+                temperature: 18,
+                condition: 'Partly Cloudy',
+                icon: '⛅',
+                humidity: 65,
+                windSpeed: 12,
+                pressure: 1013,
+                visibility: 10,
+                uvIndex: 4,
+                feelsLike: 20,
+                forecast: [
+                    { day: 'Tomorrow', icon: '🌧️', temp: '15°C' },
+                    { day: 'Tuesday', icon: '☀️', temp: '22°C' },
+                    { day: 'Wednesday', icon: '⛅', temp: '19°C' }
+                ]
+            },
+            'new york': {
+                city: 'New York, USA',
+                temperature: 24,
+                condition: 'Sunny',
+                icon: '☀️',
+                humidity: 55,
+                windSpeed: 8,
+                pressure: 1018,
+                visibility: 15,
+                uvIndex: 7,
+                feelsLike: 26,
+                forecast: [
+                    { day: 'Tomorrow', icon: '☀️', temp: '26°C' },
+                    { day: 'Tuesday', icon: '⛅', temp: '23°C' },
+                    { day: 'Wednesday', icon: '🌧️', temp: '20°C' }
+                ]
+            },
+            'tokyo': {
+                city: 'Tokyo, Japan',
+                temperature: 28,
+                condition: 'Hot & Humid',
+                icon: '🌡️',
+                humidity: 78,
+                windSpeed: 6,
+                pressure: 1008,
+                visibility: 8,
+                uvIndex: 8,
+                feelsLike: 32,
+                forecast: [
+                    { day: 'Tomorrow', icon: '🌧️', temp: '26°C' },
+                    { day: 'Tuesday', icon: '⛈️', temp: '24°C' },
+                    { day: 'Wednesday', icon: '☀️', temp: '30°C' }
+                ]
+            },
+            'jaipur': {
+                city: 'Jaipur, India',
+                temperature: 35,
+                condition: 'Hot & Dry',
+                icon: '☀️',
+                humidity: 35,
+                windSpeed: 15,
+                pressure: 1005,
+                visibility: 12,
+                uvIndex: 9,
+                feelsLike: 39,
+                forecast: [
+                    { day: 'Tomorrow', icon: '☀️', temp: '37°C' },
+                    { day: 'Tuesday', icon: '⛅', temp: '34°C' },
+                    { day: 'Wednesday', icon: '🌧️', temp: '29°C' }
+                ]
+            },
+            'paris': {
+                city: 'Paris, France',
+                temperature: 21,
+                condition: 'Light Rain',
+                icon: '🌧️',
+                humidity: 72,
+                windSpeed: 10,
+                pressure: 1012,
+                visibility: 9,
+                uvIndex: 3,
+                feelsLike: 19,
+                forecast: [
+                    { day: 'Tomorrow', icon: '⛅', temp: '23°C' },
+                    { day: 'Tuesday', icon: '☀️', temp: '25°C' },
+                    { day: 'Wednesday', icon: '🌧️', temp: '18°C' }
+                ]
+            }
+        };
+
+        function generateAIInsight(weather) {
+            const insights = {
+                'sunny': [
+                    "Perfect weather for outdoor activities! UV levels suggest using sunscreen.",
+                    "Excellent visibility and comfortable conditions. Great day for a walk or picnic!",
+                    "Clear skies ahead! Ideal conditions for photography and outdoor sports."
+                ],
+                'cloudy': [
+                    "Overcast conditions provide natural UV protection. Good for extended outdoor activities.",
+                    "Stable atmospheric conditions with comfortable temperatures expected.",
+                    "Clouds may bring cooler temperatures later. Perfect for outdoor work or exercise."
+                ],
+                'rainy': [
+                    "Rain brings fresh air and cooler temperatures. Stay hydrated and enjoy the natural sound!",
+                    "Wet conditions improve air quality. Great weather for indoor activities and cozy moments.",
+                    "Precipitation helps maintain humidity levels. Perfect time for indoor productivity."
+                ],
+                'hot': [
+                    "High temperatures detected. AI recommends staying hydrated and seeking shade during peak hours.",
+                    "Heat wave conditions present. Indoor activities recommended between 11 AM - 4 PM.",
+                    "Elevated temperatures require extra care. Wear light colors and drink plenty of water."
+                ]
+            };
+
+            let category = 'sunny';
+            if (weather.condition.toLowerCase().includes('rain') || weather.condition.toLowerCase().includes('storm')) {
+                category = 'rainy';
+            } else if (weather.condition.toLowerCase().includes('cloud') || weather.condition.toLowerCase().includes('overcast')) {
+                category = 'cloudy';
+            } else if (weather.temperature > 30) {
+                category = 'hot';
+            }
+
+            const categoryInsights = insights[category];
+            return categoryInsights[Math.floor(Math.random() * categoryInsights.length)];
+        }
+
+        function updateBackground(condition) {
+            const body = document.body;
+            body.className = '';
+            
+            if (condition.toLowerCase().includes('rain') || condition.toLowerCase().includes('storm')) {
+                body.classList.add('rainy');
+            } else if (new Date().getHours() > 18 || new Date().getHours() < 6) {
+                body.classList.add('night');
+            }
+        }
+
+        function displayWeather(weather) {
+            const display = document.getElementById('weatherDisplay');
+            const aiInsight = generateAIInsight(weather);
+            
+            updateBackground(weather.condition);
+            
+            display.innerHTML = `
+                <div class="current-weather">
+                    <div class="temp-section">
+                        <div class="weather-icon">${weather.icon}</div>
+                        <div class="temperature">${weather.temperature}°C</div>
+                        <div class="condition">${weather.condition}</div>
+                        <p style="color: #636e72; margin-top: 10px; font-size: 0.9rem;">📍 ${weather.city}</p>
+                    </div>
+                    <div class="details-section">
+                        <h3>Current Conditions</h3>
+                        <div class="weather-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Feels Like</div>
+                                <div class="detail-value">${weather.feelsLike}°C</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Humidity</div>
+                                <div class="detail-value">${weather.humidity}%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Wind Speed</div>
+                                <div class="detail-value">${weather.windSpeed} km/h</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Pressure</div>
+                                <div class="detail-value">${weather.pressure} hPa</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Visibility</div>
+                                <div class="detail-value">${weather.visibility} km</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">UV Index</div>
+                                <div class="detail-value">${weather.uvIndex}/10</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ai-insights">
+                    <h3>🤖 AI Weather Analysis</h3>
+                    <div class="insight-text">${aiInsight}</div>
+                </div>
+
+                <div class="forecast">
+                    ${weather.forecast.map(day => `
+                        <div class="forecast-item">
+                            <div class="forecast-day">${day.day}</div>
+                            <div class="forecast-icon">${day.icon}</div>
+                            <div class="forecast-temp">${day.temp}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            display.classList.add('visible');
+        }
+
+        function searchWeather() {
+            const city = document.getElementById('cityInput').value.trim().toLowerCase();
+            const display = document.getElementById('weatherDisplay');
+            
+            if (!city) {
+                display.innerHTML = '<div class="error">Please enter a city name</div>';
+                display.classList.add('visible');
+                return;
+            }
+
+            // Hide current display
+            display.classList.remove('visible');
+            
+            setTimeout(() => {
+                display.innerHTML = '<div class="loading">🤖 AI is analyzing weather patterns for ' + city + '...</div>';
+                display.classList.add('visible');
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    const weather = weatherData[city];
+                    
+                    if (weather) {
+                        display.classList.remove('visible');
+                        setTimeout(() => displayWeather(weather), 300);
+                    } else {
+                        // Generate random weather for unknown cities
+                        const randomWeather = generateRandomWeather(city);
+                        display.classList.remove('visible');
+                        setTimeout(() => displayWeather(randomWeather), 300);
+                    }
+                }, 1500);
+            }, 300);
+        }
+
+        function generateRandomWeather(cityName) {
+            const conditions = [
+                { condition: 'Sunny', icon: '☀️' },
+                { condition: 'Partly Cloudy', icon: '⛅' },
+                { condition: 'Cloudy', icon: '☁️' },
+                { condition: 'Light Rain', icon: '🌧️' },
+                { condition: 'Heavy Rain', icon: '⛈️' },
+                { condition: 'Windy', icon: '💨' }
+            ];
+            
+            const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
+            const temp = Math.floor(Math.random() * 35) + 5; // 5-40°C
+            
+            return {
+                city: cityName.charAt(0).toUpperCase() + cityName.slice(1),
+                temperature: temp,
+                condition: randomCondition.condition,
+                icon: randomCondition.icon,
+                humidity: Math.floor(Math.random() * 40) + 40,
+                windSpeed: Math.floor(Math.random() * 20) + 5,
+                pressure: Math.floor(Math.random() * 50) + 990,
+                visibility: Math.floor(Math.random() * 10) + 5,
+                uvIndex: Math.floor(Math.random() * 10) + 1,
+                feelsLike: temp + Math.floor(Math.random() * 6) - 3,
+                forecast: [
+                    { day: 'Tomorrow', icon: conditions[Math.floor(Math.random() * conditions.length)].icon, temp: `${temp + Math.floor(Math.random() * 6) - 3}°C` },
+                    { day: 'Tuesday', icon: conditions[Math.floor(Math.random() * conditions.length)].icon, temp: `${temp + Math.floor(Math.random() * 6) - 3}°C` },
+                    { day: 'Wednesday', icon: conditions[Math.floor(Math.random() * conditions.length)].icon, temp: `${temp + Math.floor(Math.random() * 6) - 3}°C` }
+                ]
+            };
+        }
+
+        function useCurrentLocation() {
+            const display = document.getElementById('weatherDisplay');
+            
+            if ("geolocation" in navigator) {
+                display.classList.remove('visible');
+                setTimeout(() => {
+                    display.innerHTML = '<div class="loading">🌍 AI is detecting your location and fetching weather data...</div>';
+                    display.classList.add('visible');
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            // For demo purposes, simulate location-based weather
+                            setTimeout(() => {
+                                const localWeather = {
+                                    city: 'Your Location',
+                                    temperature: Math.floor(Math.random() * 20) + 15,
+                                    condition: 'Clear Skies',
+                                    icon: '☀️',
+                                    humidity: Math.floor(Math.random() * 30) + 45,
+                                    windSpeed: Math.floor(Math.random() * 15) + 5,
+                                    pressure: 1015,
+                                    visibility: 12,
+                                    uvIndex: 6,
+                                    feelsLike: Math.floor(Math.random() * 20) + 18,
+                                    forecast: [
+                                        { day: 'Tomorrow', icon: '⛅', temp: '20°C' },
+                                        { day: 'Tuesday', icon: '☀️', temp: '23°C' },
+                                        { day: 'Wednesday', icon: '🌧️', temp: '17°C' }
+                                    ]
+                                };
+                                display.classList.remove('visible');
+                                setTimeout(() => displayWeather(localWeather), 300);
+                            }, 1500);
+                        },
+                        (error) => {
+                            display.innerHTML = '<div class="error">Unable to access location. Please enter a city name manually.</div>';
+                        }
+                    );
+                }, 300);
+            } else {
+                display.innerHTML = '<div class="error">Geolocation not supported by this browser.</div>';
+                display.classList.add('visible');
+            }
+        }
+
+        // Initialize with Jaipur weather
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                displayWeather(weatherData['jaipur']);
+            }, 1000);
+        });
+
+        // Add Enter key support
+        document.getElementById('cityInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchWeather();
+            }
+        });
+
+        // Auto-update every 5 minutes
+        setInterval(() => {
+            const currentCity = document.querySelector('.current-weather') ? 
+                document.querySelector('.current-weather p').textContent.replace('📍 ', '') : null;
+            
+            if (currentCity && currentCity !== 'Your Location') {
+                // Simulate slight changes in weather data
+                const cityKey = currentCity.toLowerCase().split(',')[0];
+                if (weatherData[cityKey]) {
+                    weatherData[cityKey].temperature += Math.floor(Math.random() * 3) - 1;
+                    weatherData[cityKey].humidity += Math.floor(Math.random() * 6) - 3;
+                    displayWeather(weatherData[cityKey]);
+                }
+            }
+        }, 300000); // 5 minutes
+    </script>
+</body>
+</html>
