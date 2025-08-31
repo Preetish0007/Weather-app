@@ -25,5 +25,4 @@ Auto-Refresh: Weather data updates every 5 minutes
 
 
 
-Modern web browser (Chrome, Firefox, Safari, Edge)
-Internet connection for geolocation features
+
